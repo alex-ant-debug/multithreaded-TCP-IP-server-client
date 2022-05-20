@@ -1,0 +1,67 @@
+# depslib dependency file v1.0
+1653054126 source:/home/alexlv/Work/multithreaded_TCP_server_client/main.cpp
+	"TCP_IP/include/TcpClient.h"
+	<iostream>
+	<stdlib.h>
+	<thread>
+
+1653046773 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/TCPBase.cpp
+	"../include/TCPBase.h"
+	<iostream>
+
+1653051020 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/TCPBase.h
+	<sys/socket.h>
+	<cstdint>
+	<cstring>
+	<cinttypes>
+	<malloc.h>
+	<queue>
+	<vector>
+	<functional>
+	<thread>
+	<mutex>
+	<condition_variable>
+	<atomic>
+
+1653051085 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/TcpClient.cpp
+	"../include/TcpClient.h"
+	<stdio.h>
+	<cstring>
+	<iostream>
+
+1653051085 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/TcpClient.h
+	<cstdint>
+	<cstddef>
+	<sys/socket.h>
+	<arpa/inet.h>
+	<unistd.h>
+	<stdio.h>
+	<stdlib.h>
+	"TCPBase.h"
+	<memory.h>
+
+1653051112 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/TcpServerClient.cpp
+	"../include/TcpServer.h"
+	<iostream>
+
+1653051126 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/TcpServer.h
+	<functional>
+	<list>
+	<thread>
+	<mutex>
+	<shared_mutex>
+	<sys/socket.h>
+	<netinet/in.h>
+	<netinet/tcp.h>
+	<unistd.h>
+	<fcntl.h>
+	<stdio.h>
+	<stdlib.h>
+	"TCPBase.h"
+
+1653053969 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/TcpServer.cpp
+	"../include/TcpServer.h"
+	<chrono>
+	<cstring>
+	<mutex>
+
