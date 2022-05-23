@@ -1,9 +1,7 @@
 # depslib dependency file v1.0
-1653054126 source:/home/alexlv/Work/multithreaded_TCP_server_client/main.cpp
-	"TCP_IP/include/TcpClient.h"
+1653054286 source:/home/alexlv/Work/multithreaded_TCP_server_client/main.cpp
+	"TCP_IP/include/TcpServer.h"
 	<iostream>
-	<stdlib.h>
-	<thread>
 
 1653046773 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/TCPBase.cpp
 	"../include/TCPBase.h"
