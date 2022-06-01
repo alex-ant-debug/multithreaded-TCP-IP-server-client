@@ -16,7 +16,7 @@
 #include <condition_variable>
 #include <atomic>
 
-/// Sipmple TCP
+
 namespace tcp {
 
 typedef socklen_t SockLen_t;
@@ -24,9 +24,7 @@ typedef struct sockaddr_in SocketAddr_in;
 typedef int Socket;
 typedef int ka_prop_t;
 
-constexpr uint32_t LOCALHOST_IP = 0x0100007f;
-
-enum class SocketStatus : uint8_t {
+enum SocketStatus : uint8_t {
   connected = 0,
   err_socket_init = 1,
   err_socket_bind = 2,
@@ -36,40 +34,50 @@ enum class SocketStatus : uint8_t {
 
 typedef std::vector<uint8_t> ReceivedData;
 
-enum class SocketType : uint8_t {
+enum SocketType : uint8_t {
   client_socket = 0,
   server_socket = 1
 };
 
 /// Simple thread pool implementation
 class ThreadPool {
-  std::vector<std::thread> thread_pool;
-  std::queue<std::function<void()>> job_queue;
+  std::vector<std::thread> thread_pool;  //объединение потоков
+  std::queue<std::function<void()>> job_queue; //очередь заданий
   std::mutex queue_mtx;
-  std::condition_variable condition;
-  std::atomic<bool> pool_terminated = false;
+  std::condition_variable condition;    //состояние
+  std::atomic<bool> pool_terminated = false;//объединение закрыто
 
-  void setupThreadPool(uint thread_count) {
-    thread_pool.clear();
-    for(uint i = 0; i < thread_count; ++i)
-      thread_pool.emplace_back(&ThreadPool::workerLoop, this);
-  }
-
-  void workerLoop() {
-    std::function<void()> job;
-    while (!pool_terminated) {
-      {
-        std::unique_lock lock(queue_mtx);
-        condition.wait(lock, [this](){return !job_queue.empty() || pool_terminated;});
-        if(pool_terminated) return;
-        job = job_queue.front();
-        job_queue.pop();
-      }
-      job();
+  void setupThreadPool(uint thread_count) { //настроить объединение потоков
+    thread_pool.clear();                    //очищаем вектор потоков
+    for(uint i = 0; i < thread_count; ++i) {// перебираем число потоков
+        thread_pool.emplace_back(&ThreadPool::workerLoop, this); // добавляем потоков
     }
   }
+
+  //рабочий цикл
+  void workerLoop() {
+    std::function<void()> job;
+    while (!pool_terminated) {  // пока объединение открыто
+      {
+        std::unique_lock lock(queue_mtx);   //блокирует соответствующий мьютекс
+        condition.wait(lock, [this](){      //Операция ожидания освобождают мьютекс и приостанавливают выполнение потока;
+            return !job_queue.empty() || pool_terminated;
+        });
+
+        if(pool_terminated) {// объединение закрыто
+            return;          //выходим из workerLoop
+        }
+        job = job_queue.front();// в job записываем первый элемент очереди заданий
+        job_queue.pop();        //удаляет первый элемент в очереди заданий
+      }
+      job();//запускаем первый элемент из очереди заданий
+    }
+  }
+
 public:
-  ThreadPool(uint thread_count = std::thread::hardware_concurrency()) {setupThreadPool(thread_count);}
+  ThreadPool(uint thread_count = std::thread::hardware_concurrency()) {//количество одновременных потоков
+    setupThreadPool(thread_count);
+  }
 
   ~ThreadPool() {
     pool_terminated = true;
@@ -77,23 +85,31 @@ public:
   }
 
   template<typename F>
-  void addJob(F job) {
+  void addJob(F job) {//добавить работу
     if(pool_terminated) return;
     {
-      std::unique_lock lock(queue_mtx);
-      job_queue.push(std::function<void()>(job));
+      std::unique_lock lock(queue_mtx);          //блокирует соответствующий мьютекс
+      job_queue.push(std::function<void()>(job));// вставляем элемент в конец очереди заданий
     }
-    condition.notify_one();
+    condition.notify_one();//уведомляем только один случайный поток из числа ожидающих на condition variable
   }
 
   template<typename F, typename... Arg>
-  void addJob(const F& job, const Arg&... args) {addJob([job, args...]{job(args...);});}
+  void addJob(const F& job, const Arg&... args) {
+    addJob([job, args...]{job(args...);});
+  }
 
-  void join() {for(auto& thread : thread_pool) thread.join();}
+  void join() {
+    for(auto& thread : thread_pool) {//перебор вектора потокав
+        thread.join();//ожидания завершения потока
+    }
+  }
 
-  uint getThreadCount() const {return thread_pool.size();}
+  uint getThreadCount() const {//получить количество потоков
+    return thread_pool.size();
+  }
 
-  void dropUnstartedJobs() {
+  void dropUnstartedJobs() {//удалить незапущенные задания
     pool_terminated = true;
     join();
     pool_terminated = false;

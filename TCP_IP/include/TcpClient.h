@@ -13,7 +13,7 @@ typedef int socket_t;
 #include "TCPBase.h"
 #include <memory.h>
 
-/// Sipmple TCP
+
 namespace tcp {
 
 class TcpClient : public TcpBase {
@@ -42,7 +42,7 @@ class TcpClient : public TcpBase {
 
   status _status = status::disconnected;
 
-  void handleSingleThread();
+  void handleSingleThread();//обрабатывать одиночный поток
   void handleThreadPool();
 
 public:

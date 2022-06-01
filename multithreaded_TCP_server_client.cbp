@@ -41,7 +41,6 @@
 		<Unit filename="TCP_IP/include/TcpServer.h" />
 		<Unit filename="TCP_IP/source/TcpClient.cpp" />
 		<Unit filename="TCP_IP/source/TcpServer.cpp" />
-		<Unit filename="TCP_IP/source/TcpServerClient.cpp" />
 		<Unit filename="main.cpp" />
 		<Extensions />
 	</Project>

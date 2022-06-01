@@ -2,11 +2,10 @@
 #include <chrono>
 #include <cstring>
 #include <mutex>
+#include <iostream>
 
 using namespace tcp;
 
-#define WIN(exp)
-#define NIX(exp) exp
 
 TcpServer::TcpServer(const uint16_t port,
                      KeepAliveConfig ka_conf,
@@ -28,9 +27,14 @@ TcpServer::~TcpServer() {
     stop();
 }
 
-void TcpServer::setHandler(TcpServer::handler_function_t handler) {this->handler = handler;}
+void TcpServer::setHandler(TcpServer::handler_function_t handler) {
+    this->handler = handler;
+}
 
-uint16_t TcpServer::getPort() const {return port;}
+uint16_t TcpServer::getPort() const {
+    return port;
+}
+
 uint16_t TcpServer::setPort( const uint16_t port) {
 	this->port = port;
 	start();
@@ -39,37 +43,39 @@ uint16_t TcpServer::setPort( const uint16_t port) {
 
 TcpServer::status TcpServer::start() {
   int flag;
-  if(_status == status::up) stop();
+
+  if(_status == status::up) {
+    stop();
+  }
 
   SocketAddr_in address;
-  address.sin_addr
-      WIN(.S_un.S_addr)NIX(.s_addr) = INADDR_ANY;
+  address.sin_addr.s_addr = INADDR_ANY;
   address.sin_port = htons(port);
   address.sin_family = AF_INET;
 
-
-  if((serv_socket = socket(AF_INET, SOCK_STREAM NIX(| SOCK_NONBLOCK), 0)) WIN(== INVALID_SOCKET)NIX(== -1))
-     return _status = status::err_socket_init;
+  if((serv_socket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1) {
+    _status = status::err_socket_init;
+    return _status;
+  }
 
   // Set nonblocking accept
-//  NIX( // not needed becouse socket created with flag SOCK_NONBLOCK
-//  if(fcntl(serv_socket, F_SETFL, fcntl(serv_socket, F_GETFL, 0) | O_NONBLOCK) < 0) {
-//    return _status = status::err_socket_init;
-//  })
-  WIN(
-  if(unsigned long mode = 0; ioctlsocket(serv_socket, FIONBIO, &mode) == SOCKET_ERROR) {
-    return _status = status::err_socket_init;
-  })
-
+  // not needed becouse socket created with flag SOCK_NONBLOCK
+  if(fcntl(serv_socket, F_SETFL, fcntl(serv_socket, F_GETFL, 0) | O_NONBLOCK) < 0) {
+    _status = status::err_socket_init;
+    return _status;
+  }
 
   // Bind address to socket
   if(flag = true;
-     (setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR, WIN((char*))&flag, sizeof(flag)) == -1) ||
-     (bind(serv_socket, (struct sockaddr*)&address, sizeof(address)) WIN(== SOCKET_ERROR)NIX(< 0)))
+     (setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&flag, sizeof(flag)) == -1) ||
+     (bind(serv_socket, (struct sockaddr*)&address, sizeof(address)) < 0))
      return _status = status::err_socket_bind;
 
-  if(listen(serv_socket, SOMAXCONN) WIN(== SOCKET_ERROR)NIX(< 0))
-    return _status = status::err_socket_listening;
+  if(listen(serv_socket, SOMAXCONN) < 0) {
+    _status = status::err_socket_listening;
+    return _status;
+  }
+
   _status = status::up;
   thread_pool.addJob([this]{handlingAcceptLoop();});
   thread_pool.addJob([this]{waitingDataLoop();});
@@ -79,34 +85,36 @@ TcpServer::status TcpServer::start() {
 void TcpServer::stop() {
   thread_pool.dropUnstartedJobs();
   _status = status::close;
-  WIN(closesocket)NIX(close)(serv_socket);
+  close(serv_socket);
   client_list.clear();
 }
 
-void TcpServer::joinLoop() {thread_pool.join();}
+void TcpServer::joinLoop() {
+    thread_pool.join();
+}
 
 bool TcpServer::connectTo(uint32_t host, uint16_t port, con_handler_function_t connect_hndl) {
   Socket client_socket;
   SocketAddr_in address;
-  if((client_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) WIN(== INVALID_SOCKET) NIX(< 0)) return false;
+
+  if((client_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) < 0) {
+    return false;
+  }
 
   new(&address) SocketAddr_in;
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = host;
-  WIN(address.sin_addr.S_un.S_addr = host;)
-  NIX(address.sin_addr.s_addr = host;)
-
+  address.sin_addr.s_addr = host;
   address.sin_port = htons(port);
 
-  if(connect(client_socket, (sockaddr *)&address, sizeof(address))
-     WIN(== SOCKET_ERROR)NIX(!= 0)) {
-    WIN(closesocket(client_socket);)NIX(close(client_socket);)
+  if(connect(client_socket, (sockaddr *)&address, sizeof(address)) != 0) {
+    close(client_socket);
     return false;
   }
 
   if(!enableKeepAlive(client_socket)) {
     shutdown(client_socket, 0);
-    WIN(closesocket)NIX(close)(client_socket);
+    close(client_socket);
   }
 
   std::unique_ptr<Client> client(new Client(client_socket, address));
@@ -152,10 +160,8 @@ void TcpServer::disconnectAll() {
 void TcpServer::handlingAcceptLoop() {
   SockLen_t addrlen = sizeof(SocketAddr_in);
   SocketAddr_in client_addr;
-  if (Socket client_socket =
-      WIN(accept(serv_socket, (struct sockaddr*)&client_addr, &addrlen))
-      NIX(accept4(serv_socket, (struct sockaddr*)&client_addr, &addrlen, SOCK_NONBLOCK));
-      client_socket WIN(!= 0)NIX(>= 0) && _status == status::up) {
+  if (Socket client_socket = accept4(serv_socket, (struct sockaddr*)&client_addr, &addrlen, SOCK_NONBLOCK);
+      client_socket >= 0 && _status == status::up) {
 
     // Enable keep alive for client
     if(enableKeepAlive(client_socket)) {
@@ -166,12 +172,13 @@ void TcpServer::handlingAcceptLoop() {
       client_mutex.unlock();
     } else {
       shutdown(client_socket, 0);
-      WIN(closesocket)NIX(close)(client_socket);
+      close(client_socket);
     }
   }
 
-  if(_status == status::up)
+  if(_status == status::up) {
     thread_pool.addJob([this](){handlingAcceptLoop();});
+  }
 }
 
 void TcpServer::waitingDataLoop() {
@@ -209,16 +216,108 @@ void TcpServer::waitingDataLoop() {
 
 bool TcpServer::enableKeepAlive(Socket socket) {
   int flag = 1;
-#ifdef _WIN32
-  tcp_keepalive ka {1, ka_conf.ka_idle * 1000, ka_conf.ka_intvl * 1000};
-  if (setsockopt (socket, SOL_SOCKET, SO_KEEPALIVE, (const char *) &flag, sizeof(flag)) != 0) return false;
-  unsigned long numBytesReturned = 0;
-  if(WSAIoctl(socket, SIO_KEEPALIVE_VALS, &ka, sizeof (ka), nullptr, 0, &numBytesReturned, 0, nullptr) != 0) return false;
-#else //POSIX
+
   if(setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag)) == -1) return false;
   if(setsockopt(socket, IPPROTO_TCP, TCP_KEEPIDLE, &ka_conf.ka_idle, sizeof(ka_conf.ka_idle)) == -1) return false;
   if(setsockopt(socket, IPPROTO_TCP, TCP_KEEPINTVL, &ka_conf.ka_intvl, sizeof(ka_conf.ka_intvl)) == -1) return false;
   if(setsockopt(socket, IPPROTO_TCP, TCP_KEEPCNT, &ka_conf.ka_cnt, sizeof(ka_conf.ka_cnt)) == -1) return false;
-#endif
+
   return true;
+}
+
+bool TcpServer::Client::sendData(const void* buffer, const size_t size) const {
+
+  if(_status != SocketStatus::connected) {
+    return false;
+  }
+
+  void* send_buffer = malloc(size + sizeof (uint32_t));
+  memcpy(reinterpret_cast<char*>(send_buffer) + sizeof(uint32_t), buffer, size);
+  *reinterpret_cast<uint32_t*>(send_buffer) = size;
+
+  if(send(socket, reinterpret_cast<char*>(send_buffer), size + sizeof (int), 0) < 0) {
+    return false;
+  }
+
+  free(send_buffer);
+  return true;
+}
+
+TcpServer::Client::Client(Socket socket, SocketAddr_in address) : socket(socket), address(address) {}
+
+TcpServer::Client::~Client() {
+  if(socket == -1) {
+    return;
+  }
+  shutdown(socket, SD_BOTH);
+  close(socket);
+}
+
+uint32_t TcpServer::Client::getHost() const {
+    return address.sin_addr.s_addr;
+}
+
+uint16_t TcpServer::Client::getPort() const {
+    return address.sin_port;
+}
+
+ReceivedData TcpServer::Client::loadData() {
+  if(_status != SocketStatus::connected) {
+    return ReceivedData();
+  }
+
+  ReceivedData buffer;
+  uint32_t size;
+  int err;
+
+  int answ = recv(socket, (char*)&size, sizeof(size), MSG_DONTWAIT);
+
+  // Disconnect
+  if(!answ) {
+    disconnect();
+    return ReceivedData();
+  } else if(answ == -1) {
+
+    SockLen_t len = sizeof (err);
+    getsockopt (socket, SOL_SOCKET, SO_ERROR, (char*)&err, &len);
+
+    if(!err) {
+        err = errno;
+    }
+
+    switch (err) {
+      case 0: break;
+        // Keep alive timeout
+      case ETIMEDOUT:
+      case ECONNRESET:
+      case EPIPE:
+        disconnect();
+        [[fallthrough]];
+        // No data
+      case EAGAIN: return ReceivedData();
+      default:
+        disconnect();
+        std::cout << "Unhandled error!\n" << "Code: " << err << " Err: " << std::strerror(err) << '\n';
+      return ReceivedData();
+    }
+  }
+
+  if(!size) {
+    return ReceivedData();
+    }
+
+  buffer.resize(size);
+  recv(socket, buffer.data(), buffer.size(), 0);
+  return buffer;
+}
+
+TcpBase::status TcpServer::Client::disconnect() {
+  _status = status::disconnected;
+  if(socket == -1) {
+    return _status;
+    }
+  shutdown(socket, SD_BOTH);
+  close(socket);
+  socket = -1;
+  return _status;
 }

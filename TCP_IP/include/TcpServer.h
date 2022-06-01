@@ -17,7 +17,7 @@
 
 #include "TCPBase.h"
 
-/// Sipmple TCP
+
 namespace tcp {
 
 struct KeepAliveConfig{

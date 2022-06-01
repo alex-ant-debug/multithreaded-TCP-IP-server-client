@@ -2,39 +2,46 @@
 <CodeBlocks_layout_file>
 	<FileVersion major="1" minor="0" />
 	<ActiveTarget name="Debug" />
-	<File name="main.cpp" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="TCP_IP/source/TcpServer.cpp" open="1" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="560" topLine="0" />
+			<Cursor1 position="6570" topLine="215" />
+		</Cursor>
+		<Folding>
+			<Collapse line="313" />
+		</Folding>
+	</File>
+	<File name="main.cpp" open="1" top="1" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2967" topLine="72" />
 		</Cursor>
 	</File>
-	<File name="TCP_IP/source/TcpServerClient.cpp" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="TCP_IP/source/TcpClient.cpp" open="1" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="124" topLine="0" />
+			<Cursor1 position="273" topLine="45" />
+		</Cursor>
+		<Folding>
+			<Collapse line="93" />
+			<Collapse line="132" />
+			<Collapse line="143" />
+			<Collapse line="161" />
+			<Collapse line="172" />
+			<Collapse line="181" />
+			<Collapse line="185" />
+		</Folding>
+	</File>
+	<File name="TCP_IP/include/TcpClient.h" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="898" topLine="30" />
 		</Cursor>
 	</File>
-	<File name="TCP_IP/source/TcpServer.cpp" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="TCP_IP/include/TCPBase.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="5735" topLine="171" />
+			<Cursor1 position="582" topLine="8" />
 		</Cursor>
 	</File>
-	<File name="TCP_IP/source/TcpClient.cpp" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="TCP_IP/include/TcpServer.h" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="94" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="TCP_IP/include/TcpServer.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="216" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="TCP_IP/include/TCPBase.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="662" topLine="18" />
-		</Cursor>
-	</File>
-	<File name="TCP_IP/include/TcpClient.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="192" topLine="0" />
+			<Cursor1 position="696" topLine="22" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>
