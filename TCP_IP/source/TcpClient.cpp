@@ -39,6 +39,7 @@ void TcpClient::handleThreadPool() {
 }
 
 TcpClient::TcpClient() noexcept : _status(status::disconnected) {}
+
 TcpClient::TcpClient(ThreadPool* thread_pool) noexcept :
   thread_management_type(ThreadManagementType::thread_pool),
   threads(thread_pool),
@@ -64,20 +65,22 @@ TcpClient::status TcpClient::connectTo(uint32_t host, uint16_t port) noexcept {
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = host;
 
-  address.sin_addr.s_addr = host;
+  //address.sin_addr.s_addr = host;
 
   address.sin_port = htons(port);
 
   if(connect(client_socket, (sockaddr *)&address, sizeof(address)) != 0) {
-    close(client_socket);
-		return _status = status::err_socket_connect;
+        close(client_socket);
+        return _status = status::err_socket_connect;
 	}
-	return _status = status::connected;
+        return _status = status::connected;
 }
 
 TcpClient::status TcpClient::disconnect() noexcept {
-	if(_status != status::connected)
-		return _status;
+	if(_status != status::connected) {
+        return _status;
+	}
+
   _status = status::disconnected;
   switch (thread_management_type) {
     case tcp::TcpClient::ThreadManagementType::single_thread:
