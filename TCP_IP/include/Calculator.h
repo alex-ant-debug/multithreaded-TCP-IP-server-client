@@ -1,10 +1,13 @@
 #ifndef CALCULATOR_H_INCLUDED
 #define CALCULATOR_H_INCLUDED
 
-#include "TcpServer.h"
+//#include "TcpServer.h"
 #include <iostream>
 #include <sstream>
 #include <map>
+#include <thread>
+#include <vector>
+
 
 
 namespace calc {
@@ -33,16 +36,14 @@ Calculator();
 
 ~Calculator();
 
-void sendingResponse(int32_t answer , tcp::TcpServer::Client& client);
-std::string getHostStr(const tcp::TcpServer::Client& client);
-void dataExchange(tcp::ReceivedData data, tcp::TcpServer::Client& client);
+std::string sendingResponse(int32_t answer);
+std::string dataExchange(std::vector<uint8_t> data);
 int commandProcessing(std::vector <std::string> data);
 void messageParsing(std::string message, const char separator, std::vector <std::string> &out );
-int32_t addition(int16_t a, int16_t b);
+static int32_t addition(int16_t a, int16_t b);
 int32_t subtraction(int16_t a, int16_t b);
 int32_t multiplication(int16_t a, int16_t b);
 int32_t division(int16_t a, int16_t b);
-
 
 };
 

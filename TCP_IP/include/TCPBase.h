@@ -16,6 +16,7 @@
 #include <condition_variable>
 #include <atomic>
 
+#define ERR     -1
 
 namespace tcp {
 
@@ -25,10 +26,10 @@ typedef int Socket;
 typedef int ka_prop_t;
 
 enum SocketStatus : uint8_t {
-  connected = 0,
-  err_socket_init = 1,
-  err_socket_bind = 2,
-  err_socket_connect = 3,
+  connected,
+  err_socket_init,
+  err_socket_bind,
+  err_socket_connect,
   disconnected = 4
 };
 
@@ -41,16 +42,16 @@ enum SocketType : uint8_t {
 
 /// Simple thread pool implementation
 class ThreadPool {
-  std::vector<std::thread> thread_pool;  //объединение потоков
+  std::vector<std::thread> list_thread_pool;  //список объединение потоков
   std::queue<std::function<void()>> job_queue; //очередь заданий
   std::mutex queue_mtx;
   std::condition_variable condition;    //состояние
   std::atomic<bool> pool_terminated = false;//объединение закрыто
 
   void setupThreadPool(uint thread_count) { //настроить объединение потоков
-    thread_pool.clear();                    //очищаем вектор потоков
+    list_thread_pool.clear();                    //очищаем вектор потоков
     for(uint i = 0; i < thread_count; ++i) {// перебираем число потоков
-        thread_pool.emplace_back(&ThreadPool::workerLoop, this); // добавляем потоков
+        list_thread_pool.emplace_back(&ThreadPool::workerLoop, this); // добавляем рабочий цикл в каждый поток
     }
   }
 
@@ -100,13 +101,13 @@ public:
   }
 
   void join() {
-    for(auto& thread : thread_pool) {//перебор вектора потокав
+    for(auto& thread : list_thread_pool) {//перебор вектора потокав
         thread.join();//ожидания завершения потока
     }
   }
 
   uint getThreadCount() const {//получить количество потоков
-    return thread_pool.size();
+    return list_thread_pool.size();
   }
 
   void dropUnstartedJobs() {//удалить незапущенные задания
@@ -117,7 +118,7 @@ public:
     std::queue<std::function<void()>> empty;
     std::swap(job_queue, empty);
     // reset thread pool
-    setupThreadPool(thread_pool.size());
+    setupThreadPool(list_thread_pool.size());
   }
 
   void stop() {
@@ -126,7 +127,9 @@ public:
   }
 
   void start(uint thread_count = std::thread::hardware_concurrency()) {
-    if(!pool_terminated) return;
+    if(!pool_terminated) {
+        return;
+    }
     pool_terminated = false;
     setupThreadPool(thread_count);
   }

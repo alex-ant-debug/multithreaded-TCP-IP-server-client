@@ -9,10 +9,13 @@ using namespace tcp;
 void TcpClient::handleSingleThread() {
   try {
     while(_status == status::connected) {
-      if(ReceivedData data = loadData(); !data.empty()) {
+      ReceivedData data = loadData();
+      if(!data.empty()) {
         std::lock_guard lock(handle_mutex);
         handler_func(std::move(data));
-      } else if (_status != status::connected) return;
+      } else if (_status != status::connected) {
+        return;
+      }
     }
   }  catch (std::exception& except) {
     std::cerr << except.what() << std::endl;
@@ -41,77 +44,89 @@ void TcpClient::handleThreadPool() {
 TcpClient::TcpClient() noexcept : _status(status::disconnected) {}
 
 TcpClient::TcpClient(ThreadPool* thread_pool) noexcept :
-  thread_management_type(ThreadManagementType::thread_pool),
-  threads(thread_pool),
-  _status(status::disconnected) {}
+      thread_management_type(ThreadManagementType::thread_pool),
+      threads(thread_pool),
+      _status(status::disconnected) {}
 
 TcpClient::~TcpClient() {
-  disconnect();
+    disconnect();
 
-      switch (thread_management_type) {
-    case tcp::TcpClient::ThreadManagementType::single_thread:
-      if(threads.thread) threads.thread->join();
-      delete threads.thread;
-    break;
-    case tcp::TcpClient::ThreadManagementType::thread_pool: break;
-  }
+    switch (thread_management_type)
+    {
+        case tcp::TcpClient::ThreadManagementType::single_thread:
+        {
+            if(threads.thread) {
+                threads.thread->join();
+            }
+            delete threads.thread;
+        }
+        break;
+        case tcp::TcpClient::ThreadManagementType::thread_pool:
+        break;
+    }
 }
 
 TcpClient::status TcpClient::connectTo(uint32_t host, uint16_t port) noexcept {
+    client_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    if(client_socket < 0) {
+        return _status = status::err_socket_init;
+    }
 
-  if((client_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) < 0) return _status = status::err_socket_init;
+    new(&address) SocketAddr_in;
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = host;
+    address.sin_port = htons(port);
 
-  new(&address) SocketAddr_in;
-  address.sin_family = AF_INET;
-  address.sin_addr.s_addr = host;
-
-  //address.sin_addr.s_addr = host;
-
-  address.sin_port = htons(port);
-
-  if(connect(client_socket, (sockaddr *)&address, sizeof(address)) != 0) {
+    if(connect(client_socket, (sockaddr *)&address, sizeof(address)) != 0) {
         close(client_socket);
         return _status = status::err_socket_connect;
-	}
-        return _status = status::connected;
+    }
+    return _status = status::connected;
 }
 
 TcpClient::status TcpClient::disconnect() noexcept {
-	if(_status != status::connected) {
+    if(_status != status::connected) {
         return _status;
-	}
+    }
 
-  _status = status::disconnected;
-  switch (thread_management_type) {
-    case tcp::TcpClient::ThreadManagementType::single_thread:
-      if(threads.thread) threads.thread->join();
-      delete threads.thread;
-    break;
-    case tcp::TcpClient::ThreadManagementType::thread_pool: break;
-  }
-  shutdown(client_socket, SD_BOTH);
-  close(client_socket);
-  return _status;
+    _status = status::disconnected;
+    switch (thread_management_type)
+    {
+        case tcp::TcpClient::ThreadManagementType::single_thread:
+        {
+            if(threads.thread) {
+                threads.thread->join();
+            }
+            delete threads.thread;
+        }
+        break;
+        case tcp::TcpClient::ThreadManagementType::thread_pool:
+        break;
+    }
+    shutdown(client_socket, SD_BOTH);
+    close(client_socket);
+    return _status;
 }
 
 ReceivedData TcpClient::loadData() {
     ReceivedData buffer;
-    uint32_t size;
+    uint32_t sizeData;
     int err;
 
-    int answ = recv(client_socket, (char*)&size, sizeof (size), MSG_DONTWAIT);
+    int answ = recv(client_socket, (char*)&sizeData, sizeof (sizeData), MSG_DONTWAIT);
 
     // Disconnect
     if(!answ) {
       disconnect();
       return ReceivedData();
-    } else if(answ == -1) {
+    } else if(answ == ERR) {
       // Error handle (f*ckin OS-dependence!)
         SockLen_t len = sizeof (err);
         getsockopt (client_socket, SOL_SOCKET, SO_ERROR, (char*)&err, &len);
         if(!err) err = errno;
 
-      switch (err) {
+      switch (err)
+      {
         case 0: break;
           // Keep alive timeout
         case ETIMEDOUT:
@@ -127,8 +142,10 @@ ReceivedData TcpClient::loadData() {
       }
     }
 
-    if(!size) return ReceivedData();
-    buffer.resize(size);
+    if(!sizeData) {
+        return ReceivedData();
+    }
+    buffer.resize(sizeData);
     recv(client_socket, (char*)buffer.data(), buffer.size(), 0);
     return buffer;
 }
@@ -151,35 +168,53 @@ void TcpClient::setHandler(TcpClient::handler_function_t handler) {
     handler_func = handler;
   }
 
-  switch (thread_management_type) {
+  switch (thread_management_type)
+  {
     case tcp::TcpClient::ThreadManagementType::single_thread:
-      if(threads.thread) return;
-      threads.thread = new std::thread(&TcpClient::handleSingleThread, this);
+    {
+        if(threads.thread) {
+            return;
+        }
+        threads.thread = new std::thread(&TcpClient::handleSingleThread, this);
+    }
     break;
     case tcp::TcpClient::ThreadManagementType::thread_pool:
-      threads.thread_pool->addJob([this]{handleThreadPool();});
+    {
+        threads.thread_pool->addJob([this]{handleThreadPool();});
+    }
     break;
   }
 }
 
 void TcpClient::joinHandler() {
-  switch (thread_management_type) {
+  switch (thread_management_type)
+  {
     case tcp::TcpClient::ThreadManagementType::single_thread:
-      if(threads.thread) threads.thread->join();
+    {
+        if(threads.thread) {
+            threads.thread->join();
+        }
+    }
     break;
     case tcp::TcpClient::ThreadManagementType::thread_pool:
-      threads.thread_pool->join();
+    {
+        threads.thread_pool->join();
+    }
     break;
   }
 }
 
-bool TcpClient::sendData(const void* buffer, const size_t size) const {
-  void* send_buffer = malloc(size + sizeof (int));
-  memcpy(reinterpret_cast<char*>(send_buffer) + sizeof(int), buffer, size);
-  *reinterpret_cast<int*>(send_buffer) = size;
-  if(send(client_socket, reinterpret_cast<char*>(send_buffer), size + sizeof(int), 0) < 0) return false;
-  free(send_buffer);
-	return true;
+bool TcpClient::sendData(const void* buffer, const size_t sizeBuffer) const {
+
+    void* send_buffer = malloc(sizeBuffer + sizeof (int));
+    memcpy(reinterpret_cast<char*>(send_buffer) + sizeof(int), buffer, sizeBuffer);
+    *reinterpret_cast<int*>(send_buffer) = sizeBuffer;
+
+    if(send(client_socket, reinterpret_cast<char*>(send_buffer), sizeBuffer + sizeof(int), 0) < 0) {
+        return false;
+    }
+    free(send_buffer);
+    return true;
 }
 
 uint32_t TcpClient::getHost() const {

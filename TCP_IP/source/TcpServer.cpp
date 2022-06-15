@@ -4,6 +4,8 @@
 #include <mutex>
 #include <iostream>
 
+#define   INT_TO_STRING(in)  std::to_string(int(reinterpret_cast<char*>in))
+
 using namespace tcp;
 
 
@@ -53,7 +55,8 @@ TcpServer::status TcpServer::start() {
   address.sin_port = htons(port);
   address.sin_family = AF_INET;
 
-  if((serv_socket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1) {
+  serv_socket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+  if(serv_socket == ERR) {
     _status = status::err_socket_init;
     return _status;
   }
@@ -66,10 +69,11 @@ TcpServer::status TcpServer::start() {
   }
 
   // Bind address to socket
-  if(flag = true;
-     (setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&flag, sizeof(flag)) == -1) ||
-     (bind(serv_socket, (struct sockaddr*)&address, sizeof(address)) < 0))
-     return _status = status::err_socket_bind;
+  flag = true;
+  if((setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&flag, sizeof(flag)) == ERR) ||
+     (bind(serv_socket, (struct sockaddr*)&address, sizeof(address)) < 0)) {
+        return _status = status::err_socket_bind;
+    }
 
   if(listen(serv_socket, SOMAXCONN) < 0) {
     _status = status::err_socket_listening;
@@ -93,76 +97,19 @@ void TcpServer::joinLoop() {
     thread_pool.join();
 }
 
-bool TcpServer::connectTo(uint32_t host, uint16_t port, con_handler_function_t connect_hndl) {
-  Socket client_socket;
-  SocketAddr_in address;
-
-  if((client_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_IP)) < 0) {
-    return false;
-  }
-
-  new(&address) SocketAddr_in;
-  address.sin_family = AF_INET;
-  address.sin_addr.s_addr = host;
-  address.sin_addr.s_addr = host;
-  address.sin_port = htons(port);
-
-  if(connect(client_socket, (sockaddr *)&address, sizeof(address)) != 0) {
-    close(client_socket);
-    return false;
-  }
-
-  if(!enableKeepAlive(client_socket)) {
-    shutdown(client_socket, 0);
-    close(client_socket);
-  }
-
-  std::unique_ptr<Client> client(new Client(client_socket, address));
-  connect_hndl(*client);
-  client_mutex.lock();
-  client_list.emplace_back(std::move(client));
-  client_mutex.unlock();
-  return true;
-}
-
 void TcpServer::sendData(const void* buffer, const size_t size) {
-  for(std::unique_ptr<Client>& client : client_list)
+  for(std::unique_ptr<Client>& client : client_list) {
     client->sendData(buffer, size);
-}
+  }
 
-bool TcpServer::sendDataBy(uint32_t host, uint16_t port, const void* buffer, const size_t size) {
-  bool data_is_sended = false;
-  for(std::unique_ptr<Client>& client : client_list)
-    if(client->getHost() == host &&
-       client->getPort() == port) {
-      client->sendData(buffer, size);
-      data_is_sended = true;
-    }
-  return data_is_sended;
-}
-
-bool TcpServer::disconnectBy(uint32_t host, uint16_t port) {
-  bool client_is_disconnected = false;
-  for(std::unique_ptr<Client>& client : client_list)
-    if(client->getHost() == host &&
-       client->getPort() == port) {
-      client->disconnect();
-      client_is_disconnected = true;
-    }
-  return client_is_disconnected;
-}
-
-void TcpServer::disconnectAll() {
-  for(std::unique_ptr<Client>& client : client_list)
-    client->disconnect();
 }
 
 void TcpServer::handlingAcceptLoop() {
   SockLen_t addrlen = sizeof(SocketAddr_in);
   SocketAddr_in client_addr;
-  if (Socket client_socket = accept4(serv_socket, (struct sockaddr*)&client_addr, &addrlen, SOCK_NONBLOCK);
-      client_socket >= 0 && _status == status::up) {
+  Socket client_socket = accept4(serv_socket, (struct sockaddr*)&client_addr, &addrlen, SOCK_NONBLOCK);
 
+  if ((client_socket >= 0) && (_status == status::up)) {
     // Enable keep alive for client
     if(enableKeepAlive(client_socket)) {
       std::unique_ptr<Client> client(new Client(client_socket, client_addr));
@@ -186,8 +133,9 @@ void TcpServer::waitingDataLoop() {
     std::lock_guard lock(client_mutex);
     for(auto it = client_list.begin(), end = client_list.end(); it != end; ++it) {
       auto& client = *it;
-      if(client){
-        if(ReceivedData data = client->loadData(); !data.empty()) {
+      if(client) {
+        ReceivedData data = client->loadData();
+        if(!data.empty()) {
 
           thread_pool.addJob([this, _data = std::move(data), &client]{
             client->access_mtx.lock();
@@ -210,32 +158,33 @@ void TcpServer::waitingDataLoop() {
     }
   }
 
-  if(_status == status::up)
+  if(_status == status::up) {
     thread_pool.addJob([this](){waitingDataLoop();});
+  }
 }
 
 bool TcpServer::enableKeepAlive(Socket socket) {
   int flag = 1;
 
-  if(setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag)) == -1) return false;
-  if(setsockopt(socket, IPPROTO_TCP, TCP_KEEPIDLE, &ka_conf.ka_idle, sizeof(ka_conf.ka_idle)) == -1) return false;
-  if(setsockopt(socket, IPPROTO_TCP, TCP_KEEPINTVL, &ka_conf.ka_intvl, sizeof(ka_conf.ka_intvl)) == -1) return false;
-  if(setsockopt(socket, IPPROTO_TCP, TCP_KEEPCNT, &ka_conf.ka_cnt, sizeof(ka_conf.ka_cnt)) == -1) return false;
+  if(setsockopt(socket, SOL_SOCKET,  SO_KEEPALIVE,  &flag,             sizeof(flag)) == ERR)             return false;
+  if(setsockopt(socket, IPPROTO_TCP, TCP_KEEPIDLE,  &ka_conf.ka_idle,  sizeof(ka_conf.ka_idle)) == ERR)  return false;
+  if(setsockopt(socket, IPPROTO_TCP, TCP_KEEPINTVL, &ka_conf.ka_intvl, sizeof(ka_conf.ka_intvl)) == ERR) return false;
+  if(setsockopt(socket, IPPROTO_TCP, TCP_KEEPCNT,   &ka_conf.ka_cnt,   sizeof(ka_conf.ka_cnt)) == ERR)   return false;
 
   return true;
 }
 
-bool TcpServer::Client::sendData(const void* buffer, const size_t size) const {
+bool TcpServer::Client::sendData(const void* buffer, const size_t sizeBuffer) const {
 
   if(_status != SocketStatus::connected) {
     return false;
   }
 
-  void* send_buffer = malloc(size + sizeof (uint32_t));
-  memcpy(reinterpret_cast<char*>(send_buffer) + sizeof(uint32_t), buffer, size);
-  *reinterpret_cast<uint32_t*>(send_buffer) = size;
+  void* send_buffer = malloc(sizeBuffer + sizeof (uint32_t));
+  memcpy(reinterpret_cast<char*>(send_buffer) + sizeof(uint32_t), buffer, sizeBuffer);
+  *reinterpret_cast<uint32_t*>(send_buffer) = sizeBuffer;
 
-  if(send(socket, reinterpret_cast<char*>(send_buffer), size + sizeof (int), 0) < 0) {
+  if(send(socket, reinterpret_cast<char*>(send_buffer), sizeBuffer + sizeof (int), 0) < 0) {
     return false;
   }
 
@@ -246,7 +195,7 @@ bool TcpServer::Client::sendData(const void* buffer, const size_t size) const {
 TcpServer::Client::Client(Socket socket, SocketAddr_in address) : socket(socket), address(address) {}
 
 TcpServer::Client::~Client() {
-  if(socket == -1) {
+  if(socket == ERR) {
     return;
   }
   shutdown(socket, SD_BOTH);
@@ -267,16 +216,16 @@ ReceivedData TcpServer::Client::loadData() {
   }
 
   ReceivedData buffer;
-  uint32_t size;
+  uint32_t sizeBuffer;
   int err;
 
-  int answ = recv(socket, (char*)&size, sizeof(size), MSG_DONTWAIT);
+  int answ = recv(socket, (char*)&sizeBuffer, sizeof(sizeBuffer), MSG_DONTWAIT);
 
   // Disconnect
   if(!answ) {
     disconnect();
     return ReceivedData();
-  } else if(answ == -1) {
+  } else if(answ == ERR) {
 
     SockLen_t len = sizeof (err);
     getsockopt (socket, SOL_SOCKET, SO_ERROR, (char*)&err, &len);
@@ -285,7 +234,8 @@ ReceivedData TcpServer::Client::loadData() {
         err = errno;
     }
 
-    switch (err) {
+    switch (err)
+    {
       case 0: break;
         // Keep alive timeout
       case ETIMEDOUT:
@@ -302,22 +252,30 @@ ReceivedData TcpServer::Client::loadData() {
     }
   }
 
-  if(!size) {
+  if(!sizeBuffer) {
     return ReceivedData();
     }
 
-  buffer.resize(size);
+  buffer.resize(sizeBuffer);
   recv(socket, buffer.data(), buffer.size(), 0);
   return buffer;
 }
 
 TcpBase::status TcpServer::Client::disconnect() {
   _status = status::disconnected;
-  if(socket == -1) {
+  if(socket == ERR) {
     return _status;
     }
   shutdown(socket, SD_BOTH);
   close(socket);
-  socket = -1;
+  socket = ERR;
   return _status;
+}
+
+std::string TcpServer::Client::getHostStr(const tcp::TcpServer::Client& client) {
+    uint32_t ip = client.getHost ();
+    return std::string() + INT_TO_STRING((&ip)[0]) + '.' +
+                           INT_TO_STRING((&ip)[1]) + '.' +
+                           INT_TO_STRING((&ip)[2]) + '.' +
+                           INT_TO_STRING((&ip)[3]) + ':' + std::to_string( client.getPort ());
 }

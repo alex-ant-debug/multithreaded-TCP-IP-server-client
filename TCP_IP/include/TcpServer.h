@@ -16,9 +16,15 @@
 #include <stdlib.h>
 
 #include "TCPBase.h"
+#include <sstream>
+#include <map>
+#include "Calculator.h"
 
 
 namespace tcp {
+
+class Calculator;
+
 
 struct KeepAliveConfig{
   ka_prop_t ka_idle = 120;
@@ -28,7 +34,6 @@ struct KeepAliveConfig{
 
 struct TcpServer {
   struct Client;
-  class ClientList;
   typedef std::function<void(ReceivedData, Client&)> handler_function_t;
   typedef std::function<void(Client&)> con_handler_function_t;
   static constexpr auto default_data_handler = [](ReceivedData, Client&){};
@@ -52,7 +57,6 @@ private:
   con_handler_function_t disconnect_hndl = default_connsection_handler;
 
   ThreadPool thread_pool;
-  typedef std::list<std::unique_ptr<Client>>::iterator ClientIterator;
   KeepAliveConfig ka_conf;
   std::list<std::unique_ptr<Client>> client_list;
   std::mutex client_mutex;
@@ -72,7 +76,7 @@ public:
 
   ~TcpServer();
 
-  //! Set client handler
+  // Set client handler
   void setHandler(handler_function_t handler);
 
   ThreadPool& getThreadPool() {return thread_pool;}
@@ -88,11 +92,8 @@ public:
   void joinLoop();
 
   // Server client management
-  bool connectTo(uint32_t host, uint16_t port, con_handler_function_t connect_hndl);
   void sendData(const void* buffer, const size_t size);
-  bool sendDataBy(uint32_t host, uint16_t port, const void* buffer, const size_t size);
-  bool disconnectBy(uint32_t host, uint16_t port);
-  void disconnectAll();
+
 };
 
 struct TcpServer::Client : public TcpBase {
@@ -102,6 +103,7 @@ struct TcpServer::Client : public TcpBase {
   SocketAddr_in address;
   Socket socket;
   status _status = status::connected;
+  calc::Calculator primitiveComputing;
 
 
 public:
@@ -115,6 +117,8 @@ public:
   virtual ReceivedData loadData() override;
   virtual bool sendData(const void* buffer, const size_t size) const override;
   virtual SocketType getType() const override {return SocketType::server_socket;}
+  std::string getHostStr(const tcp::TcpServer::Client& client);
+
 };
 
 }

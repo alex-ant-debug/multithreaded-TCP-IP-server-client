@@ -40,9 +40,11 @@
 		<Unit filename="TCP_IP/include/TCPBase.h" />
 		<Unit filename="TCP_IP/include/TcpClient.h" />
 		<Unit filename="TCP_IP/include/TcpServer.h" />
+		<Unit filename="TCP_IP/include/logger.h" />
 		<Unit filename="TCP_IP/source/Calculator.cpp" />
 		<Unit filename="TCP_IP/source/TcpClient.cpp" />
 		<Unit filename="TCP_IP/source/TcpServer.cpp" />
+		<Unit filename="TCP_IP/source/logger.cpp" />
 		<Unit filename="main.cpp" />
 		<Extensions />
 	</Project>
