@@ -15,7 +15,7 @@ Logger::Logger(const std::string fileName,
 
 Logger::~Logger()
 {
-    std::string logText = os.str() + '\n';
+    std::string logText = os.str();
 
     if(!this->fileName.empty()) {
         std::ofstream out;

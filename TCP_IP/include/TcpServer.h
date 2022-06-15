@@ -19,6 +19,7 @@
 #include <sstream>
 #include <map>
 #include "Calculator.h"
+#include "logger.h"
 
 
 namespace tcp {
@@ -104,7 +105,7 @@ struct TcpServer::Client : public TcpBase {
   Socket socket;
   status _status = status::connected;
   calc::Calculator primitiveComputing;
-
+  logg::Logger logClient();
 
 public:
   Client(Socket socket, SocketAddr_in address);
