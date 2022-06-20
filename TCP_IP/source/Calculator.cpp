@@ -71,35 +71,36 @@ std::string Calculator::dataExchange(std::vector<uint8_t> data)
     std::string sendingAnswer;
     std::vector <std::string> dataF;
     messageParsing((char*)data.data(), ' ', dataF);
-    int command = commandProcessing(dataF);
+    uint16_t command = (commandProcessing(dataF) < END)? commandProcessing(dataF): END + 1;
 
-    switch (command)
+    if(command < END)
     {
-        case ADD:
+        int32_t answer;
+        switch (command)
         {
-            int32_t answer =  addition(std::stoi(dataF.at(1)), std::stoi(dataF.at(2)));
-            sendingAnswer = sendingResponse(answer);
+            case ADD:
+            {
+                answer =  addition(std::stoi(dataF.at(1)), std::stoi(dataF.at(2)));
+            }
+            break;
+            case SUB:
+            {
+                answer =  subtraction(std::stoi(dataF.at(1)), std::stoi(dataF.at(2)));
+            }
+            break;
+            case MUL:
+            {
+                answer =  multiplication(std::stoi(dataF.at(1)), std::stoi(dataF.at(2)));
+            }
+            break;
+            case DIV:
+            {
+                answer =  division(std::stoi(dataF.at(1)), std::stoi(dataF.at(2)));
+            }
+            break;
+            default: {  /*std::cout << "Input Error ";*/ break;}
         }
-        break;
-        case SUB:
-        {
-            int32_t answer =  subtraction(std::stoi(dataF.at(1)), std::stoi(dataF.at(2)));
-            sendingAnswer = sendingResponse(answer);
-        }
-        break;
-        case MUL:
-        {
-            int32_t answer =  multiplication(std::stoi(dataF.at(1)), std::stoi(dataF.at(2)));
-            sendingAnswer = sendingResponse(answer);
-        }
-        break;
-        case DIV:
-        {
-            int32_t answer =  division(std::stoi(dataF.at(1)), std::stoi(dataF.at(2)));
-            sendingAnswer = sendingResponse(answer);
-        }
-        break;
-        default: {  /*std::cout << "Input Error ";*/ break;}
+        sendingAnswer = sendingResponse(answer);
     }
     return sendingAnswer;
 }

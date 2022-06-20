@@ -7,19 +7,23 @@ std::string Logger::logLavelName[4] = {"INFO",
                                        "ERROR",
                                        "DEBUG"};
 
-Logger::Logger(const std::string fileName,
-               std::string prefix)
-               :  fileName(fileName),
+
+Logger::Logger(){
+    prefix = "";
+}
+
+Logger::Logger(std::string prefix) :
                   prefix(prefix)
                   {}
 
 Logger::~Logger()
 {
+    mut_consol.lock();
     std::string logText = os.str();
 
-    if(!this->fileName.empty()) {
+    if(!this->pathAndNameLogFile.empty()) {
         std::ofstream out;
-        out.open(this->fileName, std::ios::app);
+        out.open(this->pathAndNameLogFile, std::ios::app);
         if(out.is_open()) {
             out << logText;
         }
@@ -28,15 +32,20 @@ Logger::~Logger()
         fprintf(stderr, "%s", logText.c_str());
     }
     fflush(stderr);
+    mut_consol.unlock();
 }
 
 std::ostringstream& Logger::Get(LOG_LEVEL logLevel)
 {
+    std::lock_guard lock(mut_consol);
     time_t t = time(nullptr);
-    mut_consol.lock();
     os << std::put_time(localtime(&t), "%c") << ";";
     os << " " << logLavelName[logLevel] << "; ";
     os << this->prefix << "(" << (size_t)pthread_self() << "): ";
-    mut_consol.unlock();
     return os;
+}
+
+void Logger::setName(std::string name)
+{
+    Logger::pathAndNameLogFile = name;
 }

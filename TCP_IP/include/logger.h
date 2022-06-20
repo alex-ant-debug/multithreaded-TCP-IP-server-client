@@ -9,6 +9,7 @@
 #include <sstream>
 #include <mutex>
 
+
 namespace logg {
 
 typedef enum typelog {
@@ -18,19 +19,21 @@ typedef enum typelog {
     DEBUG
 }LOG_LEVEL;
 
+
 class Logger
 {
 public:
     Logger();
-    Logger(const std::string fileName = "", std::string prefix = "");
+    Logger(std::string prefix);
     virtual ~Logger();
 
     std::ostringstream& Get(LOG_LEVEL logLevel = INFO);
+    static void setName(std::string name);
     static std::string logLavelName[4];
 
-
 protected:
-    std::string fileName;
+
+    static std::string pathAndNameLogFile;
     std::string prefix;
     std::ostringstream os;
     std::mutex mut_consol;

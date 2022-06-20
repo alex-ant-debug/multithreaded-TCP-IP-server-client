@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1655287892 source:/home/alexlv/Work/multithreaded_TCP_server_client/main.cpp
+1655712076 source:/home/alexlv/Work/multithreaded_TCP_server_client/main.cpp
 	"TCP_IP/include/TcpServer.h"
 	<iostream>
 	"TCP_IP/include/logger.h"
@@ -8,7 +8,7 @@
 	"../include/TCPBase.h"
 	<iostream>
 
-1654762665 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/TCPBase.h
+1655714039 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/TCPBase.h
 	<sys/socket.h>
 	<cstdint>
 	<cstring>
@@ -22,13 +22,13 @@
 	<condition_variable>
 	<atomic>
 
-1654758231 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/TcpClient.cpp
+1655712302 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/TcpClient.cpp
 	"../include/TcpClient.h"
 	<stdio.h>
 	<cstring>
 	<iostream>
 
-1655198124 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/TcpClient.h
+1655717605 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/TcpClient.h
 	<cstdint>
 	<cstddef>
 	<sys/socket.h>
@@ -36,13 +36,14 @@
 	<unistd.h>
 	<stdio.h>
 	<stdlib.h>
-	"TCPBase.h"
 	<memory.h>
+	"TCPBase.h"
+	"logger.h"
 
 1653384925 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/TcpServerClient.cpp
 	"../include/TcpServer.h"
 
-1655288342 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/TcpServer.h
+1655714086 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/TcpServer.h
 	<functional>
 	<list>
 	<thread>
@@ -56,34 +57,32 @@
 	<stdio.h>
 	<stdlib.h>
 	"TCPBase.h"
-	<sstream>
-	<map>
 	"Calculator.h"
 	"logger.h"
 
-1654860810 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/TcpServer.cpp
+1655712176 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/TcpServer.cpp
 	"../include/TcpServer.h"
 	<chrono>
 	<cstring>
 	<mutex>
 	<iostream>
 
-1655204852 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/Calculator.cpp
+1655470461 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/Calculator.cpp
 	"../include/Calculator.h"
 	<stdio.h>
 	<cstring>
 
-1655205151 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/Calculator.h
+1655469175 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/Calculator.h
 	<iostream>
 	<sstream>
 	<map>
 	<thread>
 	<vector>
 
-1655287709 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/logger.cpp
+1655712047 source:/home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/source/logger.cpp
 	"../include/logger.h"
 
-1655285215 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/logger.h
+1655717605 /home/alexlv/Work/multithreaded_TCP_server_client/TCP_IP/include/logger.h
 	<fstream>
 	<string>
 	<iomanip>

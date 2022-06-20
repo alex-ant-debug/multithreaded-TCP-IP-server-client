@@ -192,7 +192,8 @@ bool TcpServer::Client::sendData(const void* buffer, const size_t sizeBuffer) co
   return true;
 }
 
-TcpServer::Client::Client(Socket socket, SocketAddr_in address) : socket(socket), address(address) {}
+TcpServer::Client::Client(Socket socket, SocketAddr_in address) : socket(socket),
+                                                                  address(address){}
 
 TcpServer::Client::~Client() {
   if(socket == ERR) {
@@ -247,7 +248,7 @@ ReceivedData TcpServer::Client::loadData() {
       case EAGAIN: return ReceivedData();
       default:
         disconnect();
-        std::cout << "Unhandled error!\n" << "Code: " << err << " Err: " << std::strerror(err) << '\n';
+        logg::Logger().Get() << "Unhandled error!\n" << "Code: " << err << " Err: " << std::strerror(err) << '\n';
       return ReceivedData();
     }
   }
@@ -272,10 +273,10 @@ TcpBase::status TcpServer::Client::disconnect() {
   return _status;
 }
 
-std::string TcpServer::Client::getHostStr(const tcp::TcpServer::Client& client) {
-    uint32_t ip = client.getHost ();
+std::string TcpServer::Client::getHostStr() {
+    uint32_t ip = this->getHost ();
     return std::string() + INT_TO_STRING((&ip)[0]) + '.' +
                            INT_TO_STRING((&ip)[1]) + '.' +
                            INT_TO_STRING((&ip)[2]) + '.' +
-                           INT_TO_STRING((&ip)[3]) + ':' + std::to_string( client.getPort ());
+                           INT_TO_STRING((&ip)[3]) + ':' + std::to_string( this->getPort ());
 }

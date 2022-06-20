@@ -16,8 +16,6 @@
 #include <stdlib.h>
 
 #include "TCPBase.h"
-#include <sstream>
-#include <map>
 #include "Calculator.h"
 #include "logger.h"
 
@@ -67,6 +65,7 @@ private:
   void waitingDataLoop();
 
 public:
+  TcpServer();
   TcpServer(const uint16_t port,
             KeepAliveConfig ka_conf = {},
             handler_function_t handler = default_data_handler,
@@ -105,7 +104,8 @@ struct TcpServer::Client : public TcpBase {
   Socket socket;
   status _status = status::connected;
   calc::Calculator primitiveComputing;
-  logg::Logger logClient();
+  std::string namelogServerFile;
+
 
 public:
   Client(Socket socket, SocketAddr_in address);
@@ -118,7 +118,7 @@ public:
   virtual ReceivedData loadData() override;
   virtual bool sendData(const void* buffer, const size_t size) const override;
   virtual SocketType getType() const override {return SocketType::server_socket;}
-  std::string getHostStr(const tcp::TcpServer::Client& client);
+  std::string getHostStr();
 
 };
 

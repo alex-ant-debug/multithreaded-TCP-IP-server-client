@@ -18,7 +18,7 @@ void TcpClient::handleSingleThread() {
       }
     }
   }  catch (std::exception& except) {
-    std::cerr << except.what() << std::endl;
+    logg::Logger().Get() << except.what() << std::endl;
     return;
   }
 }
@@ -33,10 +33,10 @@ void TcpClient::handleThreadPool() {
         threads.thread_pool->addJob([this]{handleThreadPool();});
     }
   } catch (std::exception& except) {
-    std::cerr << except.what() << std::endl;
+    logg::Logger().Get() << except.what() << std::endl;
     return;
   } catch (...) {
-    std::cerr << "Unhandled exception!" << std::endl;
+    logg::Logger().Get() << "Unhandled exception!" << std::endl;
     return;
   }
 }

@@ -7,9 +7,11 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <memory.h>
 
 #include "TCPBase.h"
-#include <memory.h>
+#include "logger.h"
+
 
 
 namespace tcp {
@@ -42,7 +44,7 @@ class TcpClient : public TcpBase {
 
   status _status = status::disconnected;
 
-  void handleSingleThread();//обрабатывать одиночный поток
+  void handleSingleThread();
   void handleThreadPool();
 
 public:

@@ -20,7 +20,8 @@ enum  commandIndex {
     ADD,
     SUB,
     MUL,
-    DIV
+    DIV,
+    END // end of commandIndex
 };
 
 std::map<std::string, int> commandList = {{"add", ADD},

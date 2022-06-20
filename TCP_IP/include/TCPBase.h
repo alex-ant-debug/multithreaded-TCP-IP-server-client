@@ -42,41 +42,41 @@ enum SocketType : uint8_t {
 
 /// Simple thread pool implementation
 class ThreadPool {
-  std::vector<std::thread> list_thread_pool;  //список объединение потоков
-  std::queue<std::function<void()>> job_queue; //очередь заданий
+  std::vector<std::thread> list_thread_pool;
+  std::queue<std::function<void()>> job_queue;
   std::mutex queue_mtx;
-  std::condition_variable condition;    //состояние
-  std::atomic<bool> pool_terminated = false;//объединение закрыто
+  std::condition_variable condition;
+  std::atomic<bool> pool_terminated = false;
 
-  void setupThreadPool(uint thread_count) { //настроить объединение потоков
-    list_thread_pool.clear();                    //очищаем вектор потоков
-    for(uint i = 0; i < thread_count; ++i) {// перебираем число потоков
-        list_thread_pool.emplace_back(&ThreadPool::workerLoop, this); // добавляем рабочий цикл в каждый поток
+  void setupThreadPool(uint thread_count) {
+    list_thread_pool.clear();
+    for(uint i = 0; i < thread_count; ++i) {
+        list_thread_pool.emplace_back(&ThreadPool::workerLoop, this);
     }
   }
 
-  //рабочий цикл
+
   void workerLoop() {
     std::function<void()> job;
-    while (!pool_terminated) {  // пока объединение открыто
+    while (!pool_terminated) {
       {
-        std::unique_lock lock(queue_mtx);   //блокирует соответствующий мьютекс
-        condition.wait(lock, [this](){      //Операция ожидания освобождают мьютекс и приостанавливают выполнение потока;
+        std::unique_lock lock(queue_mtx);
+        condition.wait(lock, [this](){
             return !job_queue.empty() || pool_terminated;
         });
 
-        if(pool_terminated) {// объединение закрыто
-            return;          //выходим из workerLoop
+        if(pool_terminated) {
+            return;
         }
-        job = job_queue.front();// в job записываем первый элемент очереди заданий
-        job_queue.pop();        //удаляет первый элемент в очереди заданий
+        job = job_queue.front();
+        job_queue.pop();
       }
-      job();//запускаем первый элемент из очереди заданий
+      job();
     }
   }
 
 public:
-  ThreadPool(uint thread_count = std::thread::hardware_concurrency()) {//количество одновременных потоков
+  ThreadPool(uint thread_count = std::thread::hardware_concurrency()) {
     setupThreadPool(thread_count);
   }
 
@@ -86,13 +86,13 @@ public:
   }
 
   template<typename F>
-  void addJob(F job) {//добавить работу
+  void addJob(F job) {
     if(pool_terminated) return;
     {
-      std::unique_lock lock(queue_mtx);          //блокирует соответствующий мьютекс
-      job_queue.push(std::function<void()>(job));// вставляем элемент в конец очереди заданий
+      std::unique_lock lock(queue_mtx);
+      job_queue.push(std::function<void()>(job));
     }
-    condition.notify_one();//уведомляем только один случайный поток из числа ожидающих на condition variable
+    condition.notify_one();
   }
 
   template<typename F, typename... Arg>
@@ -101,16 +101,16 @@ public:
   }
 
   void join() {
-    for(auto& thread : list_thread_pool) {//перебор вектора потокав
-        thread.join();//ожидания завершения потока
+    for(auto& thread : list_thread_pool) {
+        thread.join();
     }
   }
 
-  uint getThreadCount() const {//получить количество потоков
+  uint getThreadCount() const {
     return list_thread_pool.size();
   }
 
-  void dropUnstartedJobs() {//удалить незапущенные задания
+  void dropUnstartedJobs() {
     pool_terminated = true;
     join();
     pool_terminated = false;
